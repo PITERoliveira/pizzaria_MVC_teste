@@ -1,0 +1,176 @@
+<%- include('../layouts/header') %>
+<%- include('../layouts/sidebar') %>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="fw-bold mb-1"><%= cliente ? 'Editar Cliente' : 'Novo Cliente' %></h2>
+    <p class="text-muted mb-0"><%= cliente ? 'Atualize as informações do cliente' : 'Cadastre um novo cliente no sistema' %></p>
+  </div>
+  <a href="/clientes" class="btn btn-outline-secondary rounded-pill px-4">
+    <i class="fa-solid fa-arrow-left me-2"></i> Voltar
+  </a>
+</div>
+
+<div class="row g-4">
+  <div class="col-xl-8">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="mb-0"><i class="fa-solid fa-user me-2"></i> Informações Pessoais</h5>
+      </div>
+      <div class="card-body">
+        <form action="<%= cliente ? '/clientes/' + cliente.id + '/editar' : '/clientes/novo' %>" method="POST" enctype="multipart/form-data" class="row g-3">
+          <% if (cliente && cliente.foto) { %>
+            <input type="hidden" name="foto" value="<%= cliente.foto %>">
+          <% } %>
+
+          <div class="col-md-6">
+            <label class="form-label">Nome Completo <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" name="nome" value="<%= cliente?.nome || '' %>" required placeholder="Nome completo do cliente">
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Telefone <span class="text-danger">*</span></label>
+            <input type="tel" class="form-control" name="telefone" value="<%= cliente?.telefone || '' %>" required placeholder="(11) 99999-9999">
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">E-mail</label>
+            <input type="email" class="form-control" name="email" value="<%= cliente?.email || '' %>" placeholder="cliente@email.com">
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">CPF</label>
+            <input type="text" class="form-control" name="cpf" value="<%= cliente?.cpf || '' %>" placeholder="000.000.000-00" maxlength="14">
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Data de Nascimento</label>
+            <input type="date" class="form-control" name="data_nascimento" value="<%= cliente?.data_nascimento || '' %>">
+          </div>
+
+          <div class="col-12">
+            <label class="form-label">Foto do Cliente</label>
+            <div class="d-flex align-items-center gap-4 mb-2">
+              <img id="previewFoto" src="<%= cliente?.foto || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(cliente?.nome || 'Cliente') + '&background=e63946&color=fff&size=200' %>" alt="Foto do Cliente" class="rounded-circle border-2" style="width: 100px; height: 100px; object-fit: cover; border-color: var(--border-color) !important;">
+              <div>
+                <input type="file" class="form-control" name="foto_upload" id="fotoUpload" accept="image/*">
+                <div class="form-text">Formatos: JPG, PNG, WEBP. Máx. 5MB. Se não enviar, será gerado avatar automático.</div>
+              </div>
+            </div>
+          </div>
+
+          <hr class="my-3">
+
+          <h6 class="fw-bold mb-3">Endereço de Entrega</h6>
+
+          <div class="col-md-4">
+            <label class="form-label">CEP</label>
+            <input type="text" class="form-control" name="cep" value="<%= cliente?.cep || '' %>" placeholder="00000-000" maxlength="9" id="cepInput">
+          </div>
+
+          <div class="col-md-8">
+            <label class="form-label">Logradouro</label>
+            <input type="text" class="form-control" name="logradouro" value="<%= cliente?.logradouro || '' %>" placeholder="Rua, Avenida, etc.">
+          </div>
+
+          <div class="col-md-2">
+            <label class="form-label">Número</label>
+            <input type="text" class="form-control" name="numero" value="<%= cliente?.numero || '' %>" placeholder="123">
+          </div>
+
+          <div class="col-md-5">
+            <label class="form-label">Complemento</label>
+            <input type="text" class="form-control" name="complemento" value="<%= cliente?.complemento || '' %>" placeholder="Apto, Bloco, Casa...">
+          </div>
+
+          <div class="col-md-5">
+            <label class="form-label">Bairro</label>
+            <input type="text" class="form-control" name="bairro" value="<%= cliente?.bairro || '' %>" placeholder="Bairro">
+          </div>
+
+          <div class="col-md-7">
+            <label class="form-label">Cidade</label>
+            <input type="text" class="form-control" name="cidade" value="<%= cliente?.cidade || 'São Paulo' %>" placeholder="São Paulo">
+          </div>
+
+          <div class="col-md-5">
+            <label class="form-label">Ponto de Referência</label>
+            <input type="text" class="form-control" name="ponto_referencia" value="<%= cliente?.ponto_referencia || '' %>" placeholder="Próximo ao mercado, esquina com...">
+          </div>
+
+          <hr class="my-3">
+
+          <div class="col-12">
+            <label class="form-label">Observações</label>
+            <textarea class="form-control" name="observacoes" rows="3" placeholder="Preferências, restrições, observações de entrega..."><%= cliente?.observacoes || '' %></textarea>
+          </div>
+
+          <div class="col-12 d-flex gap-2">
+            <button type="submit" class="btn btn-primary btn-lg px-5">
+              <i class="fa-solid fa-save me-2"></i> <%= cliente ? 'Atualizar' : 'Salvar Cliente' %>
+            </button>
+            <a href="/clientes" class="btn btn-outline-secondary btn-lg px-5">Cancelar</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-4">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="mb-0"><i class="fa-solid fa-circle-info me-2"></i> Dicas e Informações</h5>
+      </div>
+      <div class="card-body">
+        <div class="alert alert-info mb-3" style="background: rgba(59, 130, 246, 0.15); border-color: rgba(59, 130, 246, 0.3);">
+          <i class="fa-solid fa-lightbulb me-2"></i>
+          <strong>Preenchimento do CEP:</strong> O sistema pode buscar automaticamente o endereço ao digitar o CEP (futura integração ViaCEP).
+        </div>
+
+        <h6 class="fw-bold">Campos Importantes:</h6>
+        <ul class="small text-muted">
+          <li><strong>Foto:</strong> Ajuda na identificação visual no PDV e delivery.</li>
+          <li><strong>Endereço Completo:</strong> Essencial para entregas rápidas e precisas.</li>
+          <li><strong>Observações:</strong> Anote alergias, preferências (sem cebola, massa fina, etc).</li>
+        </ul>
+
+        <hr>
+
+        <h6 class="fw-bold">Histórico de Compras:</h6>
+        <p class="small text-muted">Após o cadastro, o sistema rastreará automaticamente:</p>
+        <ul class="small text-muted">
+          <li>Total de pedidos realizados</li>
+          <li>Valor total gasto</li>
+          <li>Ticket médio por pedido</li>
+          <li>Sabor favorito</li>
+          <li>Data da última compra</li>
+        </ul>
+
+        <% if (cliente) { %>
+          <hr>
+          <div class="d-grid">
+            <a href="/clientes/<%= cliente.id %>" class="btn btn-outline-primary">
+              <i class="fa-solid fa-eye me-2"></i> Ver Perfil Completo
+            </a>
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../layouts/footer') %>
+
+<script>
+  // Preview da foto ao selecionar arquivo
+  document.getElementById('fotoUpload').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        document.getElementById('previewFoto').src = e.target.result;
+      }
+      reader.readAsDataURL(file);
+    }
+  });
+</script>

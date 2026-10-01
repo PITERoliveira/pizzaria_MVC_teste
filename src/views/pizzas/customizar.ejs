@@ -1,0 +1,566 @@
+<%- include('../layouts/header') %>
+<%- include('../layouts/sidebar') %>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="fw-bold mb-1">Montador de Pizza Customizada</h2>
+    <p class="text-muted mb-0">Crie uma pizza exclusiva escolhendo massa, molho, queijos, carnes, vegetais e borda recheada. Cálculo de preço em tempo real.</p>
+  </div>
+  <a href="/vendas/pdv" class="btn btn-primary rounded-pill px-4">
+    <i class="fa-solid fa-cart-shopping me-2"></i> Ir para o PDV / Caixa
+  </a>
+</div>
+
+<!-- Preview da Pizza + Preço -->
+<div class="row g-4 mb-4">
+  <div class="col-xl-4">
+    <div class="card h-100 position-sticky" style="top: 90px;">
+      <div class="card-header">
+        <h5 class="mb-0 d-flex justify-content-between align-items-center">
+          <span><i class="fa-solid fa-pizza-slice me-2 text-warning"></i> Sua Pizza</span>
+          <span class="badge bg-primary fs-6 px-3 py-2" id="precoFinal">R$ 0,00</span>
+        </h5>
+      </div>
+      <div class="card-body p-3">
+        <!-- Visual da Pizza -->
+        <div class="pizza-visual mb-4" style="height: 280px; position: relative; background: linear-gradient(135deg, #1e293b, #0f172a); border-radius: 14px; overflow: hidden;">
+          <img id="pizzaImage" src="https://images.unsplash.com/photo-1513104890138-7c749659a591?w=500" alt="Pizza" style="width: 100%; height: 100%; object-fit: cover; opacity: 0.3; transition: opacity 0.3s;">
+          
+          <!-- Camadas SVG sobrepostas -->
+          <svg id="pizzaLayers" width="100%" height="100%" style="position: absolute; top: 0; left: 0; pointer-events: none;">
+            <!-- Massa base -->
+            <circle cx="50%" cy="50%" r="40%" fill="#d9a441" stroke="#c4872c" stroke-width="3" />
+            <!-- Molho -->
+            <circle cx="50%" cy="50%" r="38%" fill="#c0392b" id="svgMolho" style="opacity: 0;" />
+            <!-- Queijo -->
+            <circle cx="50%" cy="50%" r="35%" fill="#f1c40f" id="svgQueijo" style="opacity: 0;" />
+            <!-- Borda -->
+            <circle cx="50%" cy="50%" r="43%" fill="none" stroke="#8b4513" stroke-width="6" stroke-dasharray="8,4" id="svgBorda" style="opacity: 0;" />
+          </svg>
+        </div>
+
+        <!-- Resumo dos Itens Selecionados -->
+        <div id="resumoSelecao" class="small">
+          <div class="d-flex justify-content-between mb-1 p-2 rounded bg-dark text-muted" style="border: 1px solid var(--border-color);">
+            <span>Base da Pizza</span>
+            <span class="fw-bold" id="resumoTamanho">Selecione...</span>
+          </div>
+          <div class="mb-2">
+            <div class="d-flex justify-content-between small text-muted px-2">
+              <span>Massa</span>
+              <span id="resumoMassa" class="fw-bold text-muted">-</span>
+            </div>
+            <div class="d-flex justify-content-between small text-muted px-2">
+              <span>Molho</span>
+              <span id="resumoMolho" class="fw-bold text-muted">-</span>
+            </div>
+            <div class="d-flex justify-content-between small text-muted px-2">
+              <span>Queijo Base</span>
+              <span id="resumoQueijo" class="fw-bold text-muted">-</span>
+            </div>
+          </div>
+          
+          <hr class="my-2">
+          
+          <div class="mb-2">
+            <div class="d-flex justify-content-between small text-muted px-2">
+              <span>Ingredientes Extras</span>
+              <span id="countIngredientes" class="badge bg-secondary">0</span>
+            </div>
+            <div id="listaIngredientesExtras" class="small text-muted px-2" style="max-height: 100px; overflow-y: auto;">
+              <em>Nenhum ingrediente extra selecionado</em>
+            </div>
+          </div>
+
+          <hr class="my-2">
+
+          <div class="mb-2">
+            <div class="d-flex justify-content-between small text-muted px-2">
+              <span>Borda Recheada</span>
+              <span id="resumoBorda" class="fw-bold text-muted">-</span>
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-between fw-bold fs-5 mt-3 pt-3 border-top">
+            <span>Total Estimado</span>
+            <span id="precoFinalResumo" class="text-success">R$ 0,00</span>
+          </div>
+        </div>
+
+        <div class="card-footer bg-transparent border-top-0">
+          <form id="formAddCarrinho">
+            <input type="hidden" name="tipo_item" value="PIZZA_CUSTOMIZADA">
+            <input type="hidden" name="pizza_id" value="">
+            <input type="hidden" name="nome_item" value="Pizza Customizada">
+            <input type="hidden" name="tamanho" id="inputTamanho">
+            <input type="hidden" name="quantidade" value="1">
+            <input type="hidden" name="preco_unitario" id="inputPrecoUnitario">
+            <input type="hidden" name="subtotal" id="inputSubtotal">
+            <input type="hidden" name="detalhes_customizacao" id="inputDetalhesCustomizacao">
+            <input type="hidden" name="observacao" id="inputObservacao">
+            
+            <button type="submit" class="btn btn-success w-100 py-3 fw-bold fs-5 rounded-pill" disabled id="btnAddCarrinho">
+              <i class="fa-solid fa-cart-plus me-2"></i> Adicionar ao Carrinho
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Seleção de Ingredientes -->
+  <div class="col-xl-8">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="mb-0"><i class="fa-solid fa-layer-group me-2 text-info"></i> Etapas de Montagem</h5>
+      </div>
+      <div class="card-body">
+        <!-- PASSO 1: Tamanho -->
+        <div class="mb-4" data-passo="1">
+          <h6 class="fw-bold mb-3 d-flex align-items-center gap-2"><span class="badge bg-primary">1</span> Tamanho da Pizza</h6>
+          <div class="row g-2" id="opcoesTamanho">
+            <div class="col-md-3">
+              <label class="tamanho-option p-3 text-center border rounded-3 cursor-pointer d-block" data-tamanho="BROTINHO" data-fator="0.5" data-base="28">
+                <div class="fw-bold">Brotinho</div>
+                <small class="text-muted">6 fatias</small>
+                <div class="text-success fw-bold mt-1">R$ <span id="precoBrotinho">0,00</span></div>
+              </label>
+            </div>
+            <div class="col-md-3">
+              <label class="tamanho-option p-3 text-center border rounded-3 cursor-pointer d-block" data-tamanho="MEDIA" data-fator="0.75" data-base="35">
+                <div class="fw-bold">Média</div>
+                <small class="text-muted">8 fatias</small>
+                <div class="text-success fw-bold mt-1">R$ <span id="precoMedia">0,00</span></div>
+              </label>
+            </div>
+            <div class="col-md-3">
+              <label class="tamanho-option p-3 text-center border rounded-3 cursor-pointer d-block active" data-tamanho="GRANDE" data-fator="1.0" data-base="42">
+                <div class="fw-bold">Grande</div>
+                <small class="text-muted">10 fatias</small>
+                <div class="text-success fw-bold mt-1">R$ <span id="precoGrande">0,00</span></div>
+              </label>
+            </div>
+            <div class="col-md-3">
+              <label class="tamanho-option p-3 text-center border rounded-3 cursor-pointer d-block" data-tamanho="FAMILIA" data-fator="1.3" data-base="48">
+                <div class="fw-bold">Família</div>
+                <small class="text-muted">12 fatias</small>
+                <div class="text-success fw-bold mt-1">R$ <span id="precoFamilia">0,00</span></div>
+              </label>
+            </div>
+          </div>
+          <input type="hidden" name="tamanho_selecionado" id="tamanhoSelecionado" value="GRANDE">
+        </div>
+
+        <hr class="my-4">
+
+        <!-- PASSO 2: Massa -->
+        <div class="mb-4" data-passo="2">
+          <h6 class="fw-bold mb-3 d-flex align-items-center gap-2"><span class="badge bg-primary">2</span> Massa</h6>
+          <div class="row g-2" id="opcoesMassa">
+            <% porCategoria.massas.forEach(m => { %>
+              <div class="col-md-4">
+                <label class="ingrediente-option p-3 border rounded-3 cursor-pointer d-block h-100" data-id="<%= m.id %>" data-categoria="massa" data-preco="<%= m.preco_adicional %>" data-nome="<%= m.nome %>">
+                  <div class="fw-bold"><%= m.nome %></div>
+                  <small class="text-muted">Estoque: <%= m.quantidade_estoque %>g</small>
+                  <div class="text-info fw-bold mt-1"><%= m.preco_adicional > 0 ? '+ R$ ' + m.preco_adicional.toFixed(2) : 'Incluso' %></div>
+                </label>
+              </div>
+            <% }) %>
+          </div>
+          <input type="hidden" name="massa_id" id="massaSelecionada" value="">
+        </div>
+
+        <!-- PASSO 3: Molho -->
+        <div class="mb-4" data-passo="3">
+          <h6 class="fw-bold mb-3 d-flex align-items-center gap-2"><span class="badge bg-primary">3</span> Molho</h6>
+          <div class="row g-2" id="opcoesMolho">
+            <% porCategoria.molhos.forEach(m => { %>
+              <div class="col-md-4">
+                <label class="ingrediente-option p-3 border rounded-3 cursor-pointer d-block h-100" data-id="<%= m.id %>" data-categoria="molho" data-preco="<%= m.preco_adicional %>" data-nome="<%= m.nome %>">
+                  <div class="fw-bold"><%= m.nome %></div>
+                  <small class="text-muted">Estoque: <%= m.quantidade_estoque %>ml</small>
+                  <div class="text-info fw-bold mt-1"><%= m.preco_adicional > 0 ? '+ R$ ' + m.preco_adicional.toFixed(2) : 'Incluso' %></div>
+                </label>
+              </div>
+            <% }) %>
+          </div>
+          <input type="hidden" name="molho_id" id="molhoSelecionado" value="">
+        </div>
+
+        <!-- PASSO 4: Queijo Base -->
+        <div class="mb-4" data-passo="4">
+          <h6 class="fw-bold mb-3 d-flex align-items-center gap-2"><span class="badge bg-primary">4</span> Queijo Base</h6>
+          <div class="row g-2" id="opcoesQueijo">
+            <% porCategoria.queijos.forEach(q => { %>
+              <div class="col-md-4">
+                <label class="ingrediente-option p-3 border rounded-3 cursor-pointer d-block h-100" data-id="<%= q.id %>" data-categoria="queijo_base" data-preco="<%= q.preco_adicional %>" data-nome="<%= q.nome %>">
+                  <div class="fw-bold"><%= q.nome %></div>
+                  <small class="text-muted">Estoque: <%= q.quantidade_estoque %>g</small>
+                  <div class="text-info fw-bold mt-1"><%= q.preco_adicional > 0 ? '+ R$ ' + q.preco_adicional.toFixed(2) : 'Incluso' %></div>
+                </label>
+              </div>
+            <% }) %>
+          </div>
+          <input type="hidden" name="queijo_id" id="queijoSelecionado" value="">
+        </div>
+
+        <!-- PASSO 5: Ingredientes Extras (Múltipla escolha) -->
+        <div class="mb-4" data-passo="5">
+          <h6 class="fw-bold mb-3 d-flex align-items-center gap-2 justify-content-between">
+            <span><span class="badge bg-primary">5</span> Ingredientes Extras</span>
+            <small class="text-muted">Selecione quantos desejar</small>
+          </h6>
+          
+          <!-- Carnes -->
+          <h6 class="fw-bold mb-2 mt-3 text-warning"><i class="fa-solid fa-drumstick-bite me-1"></i> Carnes e Proteínas</h6>
+          <div class="row g-2 mb-3" id="opcoesCarnes">
+            <% porCategoria.carnes.forEach(c => { %>
+              <div class="col-md-3">
+                <label class="ingrediente-multi-option p-2 border rounded-3 cursor-pointer d-block h-100 text-center" data-id="<%= c.id %>" data-categoria="extra_carne" data-preco="<%= c.preco_adicional %>" data-nome="<%= c.nome %>">
+                  <div class="fw-bold small"><%= c.nome %></div>
+                  <div class="text-info fw-bold xsmall"><%= c.preco_adicional > 0 ? '+ R$ ' + c.preco_adicional.toFixed(2) : 'Incluso' %></div>
+                </label>
+              </div>
+            <% }) %>
+          </div>
+
+          <!-- Vegetais -->
+          <h6 class="fw-bold mb-2 text-success"><i class="fa-solid fa-leaf me-1"></i> Vegetais e Acompanhamentos</h6>
+          <div class="row g-2" id="opcoesVegetais">
+            <% porCategoria.vegetais.forEach(v => { %>
+              <div class="col-md-3">
+                <label class="ingrediente-multi-option p-2 border rounded-3 cursor-pointer d-block h-100 text-center" data-id="<%= v.id %>" data-categoria="extra_vegetal" data-preco="<%= v.preco_adicional %>" data-nome="<%= v.nome %>">
+                  <div class="fw-bold small"><%= v.nome %></div>
+                  <div class="text-info fw-bold xsmall"><%= v.preco_adicional > 0 ? '+ R$ ' + v.preco_adicional.toFixed(2) : 'Incluso' %></div>
+                </label>
+              </div>
+            <% }) %>
+          </div>
+
+          <input type="hidden" name="ingredientes_extras" id="ingredientesExtrasSelecionados" value="[]">
+        </div>
+
+        <!-- PASSO 6: Borda Recheada -->
+        <div class="mb-4" data-passo="6">
+          <h6 class="fw-bold mb-3 d-flex align-items-center gap-2"><span class="badge bg-primary">6</span> Borda Recheada <small class="text-muted">(Opcional)</small></h6>
+          <div class="row g-2" id="opcoesBorda">
+            <div class="col-md-4">
+              <label class="ingrediente-option p-3 border rounded-3 cursor-pointer d-block h-100 text-center" data-id="" data-categoria="borda" data-preco="0" data-nome="Sem Borda">
+                <div class="fw-bold">Sem Borda</div>
+                <div class="text-muted">Tradicional</div>
+                <div class="text-info fw-bold mt-1">Incluso</div>
+              </label>
+            </div>
+            <% porCategoria.bordas.forEach(b => { %>
+              <div class="col-md-4">
+                <label class="ingrediente-option p-3 border rounded-3 cursor-pointer d-block h-100" data-id="<%= b.id %>" data-categoria="borda" data-preco="<%= b.preco_adicional %>" data-nome="<%= b.nome %>">
+                  <div class="fw-bold"><%= b.nome %></div>
+                  <small class="text-muted">Estoque: <%= b.quantidade_estoque %> un</small>
+                  <div class="text-info fw-bold mt-1">+ R$ <%= b.preco_adicional.toFixed(2) %></div>
+                </label>
+              </div>
+            <% }) %>
+          </div>
+          <input type="hidden" name="borda_id" id="bordaSelecionada" value="">
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Estado global do montador
+  const estado = {
+    tamanho: 'GRANDE',
+    fatorTamanho: 1.0,
+    precoBaseTamanho: 42.00, // Preço base da pizza Grande (médio dos preços)
+    massa: null,
+    molho: null,
+    queijo: null,
+    extras: [],
+    borda: null
+  };
+
+  // Preços base por tamanho (valores padrão, idealmente vindos de uma pizza base)
+  const precosBase = {
+    BROTINHO: 28.00,
+    MEDIA: 35.00,
+    GRANDE: 42.00,
+    FAMILIA: 48.00
+  };
+
+  const fatores = {
+    BROTINHO: 0.5,
+    MEDIA: 0.75,
+    GRANDE: 1.0,
+    FAMILIA: 1.3
+  };
+
+  // Seleção de Tamanho
+  document.querySelectorAll('.tamanho-option').forEach(opt => {
+    opt.addEventListener('click', function() {
+      document.querySelectorAll('.tamanho-option').forEach(o => o.classList.remove('active'));
+      this.classList.add('active');
+      
+      estado.tamanho = this.dataset.tamanho;
+      estado.fatorTamanho = parseFloat(this.dataset.fator);
+      estado.precoBaseTamanho = parseFloat(this.dataset.base);
+      
+      document.getElementById('tamanhoSelecionado').value = estado.tamanho;
+      document.getElementById('resumoTamanho').textContent = estado.tamanho.charAt(0) + estado.tamanho.slice(1).toLowerCase();
+      document.getElementById('inputTamanho').value = estado.tamanho;
+      
+      atualizarPrecoFinal();
+      atualizarSVG();
+    });
+  });
+
+  // Seleção única (Massa, Molho, Queijo, Borda)
+  function configurarSelecaoUnica(categoria, hiddenInputId, resumoId, svgCallback) {
+    document.querySelectorAll(`[data-categoria="${categoria}"]`).forEach(opt => {
+      opt.addEventListener('click', function() {
+        // Remover active dos irmãos
+        document.querySelectorAll(`[data-categoria="${categoria}"]`).forEach(o => o.classList.remove('active'));
+        this.classList.add('active');
+        
+        const id = this.dataset.id || null;
+        const nome = this.dataset.nome;
+        const preco = parseFloat(this.dataset.preco) || 0;
+        
+        document.getElementById(hiddenInputId).value = id;
+        document.getElementById(resumoId).textContent = nome + (preco > 0 ? ` (+ R$ ${preco.toFixed(2)})` : '');
+        
+        estado[categoria] = { id, nome, preco };
+        
+        atualizarPrecoFinal();
+        if (svgCallback) svgCallback(id);
+      });
+    });
+  }
+
+  configurarSelecaoUnica('massa', 'massaSelecionada', 'resumoMassa', (id) => {
+    document.getElementById('svgMolho').style.opacity = '1';
+    atualizarSVG();
+  });
+  
+  configurarSelecaoUnica('molho', 'molhoSelecionado', 'resumoMolho');
+  configurarSelecaoUnica('queijo_base', 'queijoSelecionado', 'resumoQueijo', (id) => {
+    document.getElementById('svgQueijo').style.opacity = '1';
+    atualizarSVG();
+  });
+  configurarSelecaoUnica('borda', 'bordaSelecionada', 'resumoBorda', (id) => {
+    document.getElementById('svgBorda').style.opacity = id ? '1' : '0';
+    atualizarSVG();
+  });
+
+  // Seleção Múltipla (Extras)
+  document.querySelectorAll('.ingrediente-multi-option').forEach(opt => {
+    opt.addEventListener('click', function() {
+      const id = this.dataset.id;
+      const nome = this.dataset.nome;
+      const preco = parseFloat(this.dataset.preco) || 0;
+      const categoria = this.dataset.categoria;
+      
+      const index = estado.extras.findIndex(e => e.id === id);
+      
+      if (index >= 0) {
+        // Remover
+        estado.extras.splice(index, 1);
+        this.classList.remove('active');
+      } else {
+        // Adicionar
+        estado.extras.push({ id, nome, preco, categoria });
+        this.classList.add('active');
+      }
+      
+      document.getElementById('ingredientesExtrasSelecionados').value = JSON.stringify(estado.extras);
+      atualizarListaExtras();
+      atualizarPrecoFinal();
+    });
+  });
+
+  function atualizarListaExtras() {
+    const container = document.getElementById('listaIngredientesExtras');
+    const countEl = document.getElementById('countIngredientes');
+    
+    countEl.textContent = estado.extras.length;
+    
+    if (estado.extras.length === 0) {
+      container.innerHTML = '<em>Nenhum ingrediente extra selecionado</em>';
+      return;
+    }
+    
+    let html = '';
+    let totalExtras = 0;
+    
+    estado.extras.forEach(e => {
+      html += `<div class="d-flex justify-content-between py-1 border-bottom">
+        <span>${e.nome}</span>
+        <span class="text-info">${e.preco > 0 ? '+ R$ ' + e.preco.toFixed(2) : 'Incluso'}</span>
+      </div>`;
+      totalExtras += e.preco;
+    });
+    
+    html += `<div class="d-flex justify-content-between fw-bold pt-2">
+      <span>Subtotal Extras</span>
+      <span class="text-warning">+ R$ ${totalExtras.toFixed(2)}</span>
+    </div>`;
+    
+    container.innerHTML = html;
+  }
+
+  // Atualização do Preço Final
+  function atualizarPrecoFinal() {
+    let precoTotal = estado.precoBaseTamanho;
+    
+    // Adicionais do tamanho (se houver)
+    // Adicionais dos componentes
+    if (estado.massa && estado.massa.preco > 0) precoTotal += estado.massa.preco;
+    if (estado.molho && estado.molho.preco > 0) precoTotal += estado.molho.preco;
+    if (estado.queijo && estado.queijo.preco > 0) precoTotal += estado.queijo.preco;
+    if (estado.borda && estado.borda.preco > 0) precoTotal += estado.borda.preco;
+    
+    // Extras
+    estado.extras.forEach(e => precoTotal += e.preco);
+    
+    // Atualizar display
+    document.getElementById('precoFinal').textContent = `R$ ${precoTotal.toFixed(2)}`;
+    document.getElementById('precoFinalResumo').textContent = `R$ ${precoTotal.toFixed(2)}`;
+    document.getElementById('inputPrecoUnitario').value = precoTotal.toFixed(2);
+    document.getElementById('inputSubtotal').value = precoTotal.toFixed(2);
+    
+    // Habilitar botão se massa, molho e queijo selecionados
+    const completo = estado.massa && estado.molho && estado.queijo;
+    document.getElementById('btnAddCarrinho').disabled = !completo;
+    
+    if (completo) {
+      // Montar detalhes para o backend
+      const detalhes = {
+        tamanho: estado.tamanho,
+        fator_tamanho: estado.fatorTamanho,
+        massa_id: estado.massa.id,
+        molho_id: estado.molho.id,
+        queijo_id: estado.queijo.id,
+        borda_id: estado.borda?.id || null,
+        ingredientes: estado.extras.map(e => e.id)
+      };
+      
+      document.getElementById('inputDetalhesCustomizacao').value = JSON.stringify(detalhes);
+      document.getElementById('inputObservacao').value = `Pizza Customizada - ${estado.tamanho.charAt(0) + estado.tamanho.slice(1).toLowerCase()}`;
+    }
+  }
+
+  // Atualização SVG Visual
+  function atualizarSVG() {
+    const svgMolho = document.getElementById('svgMolho');
+    const svgQueijo = document.getElementById('svgQueijo');
+    const svgBorda = document.getElementById('svgBorda');
+    
+    // Cores baseadas nas seleções
+    if (estado.molho) {
+      // Poderia buscar cor do ingrediente no DB
+      svgMolho.style.fill = '#c0392b'; // vermelho tomate
+      svgMolho.style.opacity = '1';
+    }
+    
+    if (estado.queijo) {
+      svgQueijo.style.fill = '#f1c40f'; // amarelo queijo
+      svgQueijo.style.opacity = '1';
+    }
+    
+    if (estado.borda && estado.borda.id) {
+      svgBorda.style.opacity = '1';
+      // Cor da borda poderia variar
+      if (estado.borda.nome.includes('Cheddar')) svgBorda.style.stroke = '#ff8c00';
+      else if (estado.borda.nome.includes('Chocolate')) svgBorda.style.stroke = '#8b4513';
+      else svgBorda.style.stroke = '#ffd700';
+    } else {
+      svgBorda.style.opacity = '0';
+    }
+  }
+
+  // Preencher preços dos tamanhos (baseados em média das pizzas do cardápio)
+  document.getElementById('precoBrotinho').textContent = precosBase.BROTINHO.toFixed(2);
+  document.getElementById('precoMedia').textContent = precosBase.MEDIA.toFixed(2);
+  document.getElementById('precoGrande').textContent = precosBase.GRANDE.toFixed(2);
+  document.getElementById('precoFamilia').textContent = precosBase.FAMILIA.toFixed(2);
+
+  // Inicializar
+  atualizarPrecoFinal();
+
+  // Form submit
+  document.getElementById('formAddCarrinho').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const btn = document.getElementById('btnAddCarrinho');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i> Adicionando...';
+    
+    const formData = new FormData(this);
+    const dados = {};
+    formData.forEach((v, k) => dados[k] = v);
+    
+    try {
+      const response = await fetch('/vendas/nova', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          dadosPedido: {
+            tipo_pedido: 'BALCAO',
+            forma_pagamento: 'DINHEIRO',
+            subtotal: parseFloat(dados.preco_unitario),
+            total: parseFloat(dados.preco_unitario),
+            status: 'RECEBIDO'
+          },
+          itens: [dados]
+        })
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        btn.innerHTML = '<i class="fa-solid fa-check me-2"></i> Adicionado ao Carrinho!';
+        btn.classList.remove('btn-success');
+        btn.classList.add('btn-outline-success');
+        
+        // Resetar form após 2s
+        setTimeout(() => {
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fa-solid fa-cart-plus me-2"></i> Adicionar ao Carrinho';
+          btn.classList.remove('btn-outline-success');
+          btn.classList.add('btn-success');
+        }, 2000);
+        
+        // Toast ou alert
+        alert('Pizza customizada adicionada ao carrinho! Redirecionando para o PDV...');
+        window.location.href = '/vendas/pdv';
+      } else {
+        throw new Error(result.error || 'Erro ao adicionar');
+      }
+    } catch (err) {
+      console.error(err);
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-cart-plus me-2"></i> Adicionar ao Carrinho';
+      alert('Erro ao adicionar ao carrinho: ' + err.message);
+    }
+  });
+
+  // Estilo CSS inline para options ativos
+  const style = document.createElement('style');
+  style.textContent = `
+    .tamanho-option.active, .ingrediente-option.active, .ingrediente-multi-option.active {
+      border-color: var(--primary) !important;
+      background: rgba(230, 57, 70, 0.15) !important;
+      box-shadow: 0 0 0 2px rgba(230, 57, 70, 0.3);
+    }
+    .tamanho-option:hover, .ingrediente-option:hover, .ingrediente-multi-option:hover {
+      border-color: var(--accent) !important;
+      background: rgba(255, 183, 3, 0.08);
+    }
+    .cursor-pointer { cursor: pointer; }
+    .xsmall { font-size: 0.7rem; }
+  `;
+  document.head.appendChild(style);
+</script>
+
+<%- include('../layouts/footer') %>

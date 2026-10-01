@@ -1,0 +1,205 @@
+<%- include('../layouts/header') %>
+<%- include('../layouts/sidebar') %>
+
+<!-- Alertas de Estoque Baixo se houver -->
+<% if (alertasEstoque && alertasEstoque.length > 0) { %>
+  <div class="alert alert-warning d-flex align-items-center justify-content-between mb-4 shadow-sm border-0" role="alert" style="background: rgba(245, 158, 11, 0.15); border-left: 4px solid var(--warning) !important;">
+    <div class="d-flex align-items-center gap-3">
+      <i class="fa-solid fa-triangle-exclamation fs-4 text-warning"></i>
+      <div>
+        <strong>Atenção ao Estoque!</strong> Existem <%= alertasEstoque.length %> ingrediente(s) com estoque igual ou abaixo do mínimo recomendado.
+      </div>
+    </div>
+    <a href="/estoque?alerta=true" class="btn btn-warning btn-sm fw-semibold text-dark">Ver Estoque Crítico</a>
+  </div>
+<% } %>
+
+<!-- Stats Cards Grid -->
+<div class="row g-4 mb-4">
+  <div class="col-xl-3 col-md-6">
+    <div class="stat-card">
+      <div class="stat-info">
+        <h5>Faturamento Hoje</h5>
+        <h3>R$ <%= stats.faturamentoHoje.total.toFixed(2) %></h3>
+        <small class="text-muted"><%= stats.faturamentoHoje.qtd %> pedidos hoje</small>
+      </div>
+      <div class="stat-icon primary">
+        <i class="fa-solid fa-wallet"></i>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6">
+    <div class="stat-card">
+      <div class="stat-info">
+        <h5>Faturamento do Mês</h5>
+        <h3>R$ <%= stats.faturamentoMes.total.toFixed(2) %></h3>
+        <small class="text-muted"><%= stats.faturamentoMes.qtd %> pedidos no mês</small>
+      </div>
+      <div class="stat-icon success">
+        <i class="fa-solid fa-chart-line"></i>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6">
+    <div class="stat-card">
+      <div class="stat-info">
+        <h5>Ticket Médio</h5>
+        <h3>R$ <%= stats.ticketMedio.toFixed(2) %></h3>
+        <small class="text-muted">Por pedido realizado</small>
+      </div>
+      <div class="stat-icon info">
+        <i class="fa-solid fa-receipt"></i>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6">
+    <div class="stat-card">
+      <div class="stat-info">
+        <h5>Clientes Ativos</h5>
+        <h3><%= stats.totalClientes %></h3>
+        <small class="text-muted">Cadastrados no sistema</small>
+      </div>
+      <div class="stat-icon warning">
+        <i class="fa-solid fa-users"></i>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Gráficos Row -->
+<div class="row g-4 mb-4">
+  <div class="col-xl-8">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="fa-solid fa-chart-area me-2 text-primary"></i> Faturamento dos Últimos 7 Dias</h5>
+        <span class="badge bg-primary">Diário</span>
+      </div>
+      <div class="card-body">
+        <div style="height: 320px;">
+          <canvas id="vendasChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-4">
+    <div class="card h-100">
+      <div class="card-header">
+        <h5 class="mb-0"><i class="fa-solid fa-pizza-slice me-2 text-accent"></i> Top 5 Sabores Mais Vendidos</h5>
+      </div>
+      <div class="card-body">
+        <div class="list-group list-group-flush">
+          <% if (stats.topProdutos && stats.topProdutos.length > 0) { %>
+            <% stats.topProdutos.forEach((prod, index) => { %>
+              <div class="list-group-item bg-transparent text-white px-0 d-flex justify-content-between align-items-center border-bottom py-3">
+                <div class="d-flex align-items-center gap-3">
+                  <span class="badge bg-secondary rounded-circle p-2" style="width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center;"><%= index + 1 %></span>
+                  <div>
+                    <h6 class="mb-0 fw-semibold"><%= prod.nome_item %></h6>
+                    <small class="text-muted"><%= prod.total_vendido %> unidades vendidas</small>
+                  </div>
+                </div>
+                <span class="text-success fw-bold">R$ <%= prod.faturamento_item.toFixed(2) %></span>
+              </div>
+            <% }) %>
+          <% } else { %>
+            <p class="text-muted text-center py-4">Nenhuma venda registrada ainda.</p>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Pedidos Recentes & Formas de Pagamento -->
+<div class="row g-4">
+  <div class="col-xl-8">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="fa-solid fa-clock-rotate-left me-2 text-info"></i> Pedidos Recentes</h5>
+        <a href="/vendas" class="btn btn-sm btn-outline-light">Ver Todos</a>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Cliente</th>
+                <th>Tipo</th>
+                <th>Total</th>
+                <th>Status</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% if (stats.pedidosRecentes && stats.pedidosRecentes.length > 0) { %>
+                <% stats.pedidosRecentes.forEach(ped => { %>
+                  <tr>
+                    <td class="fw-bold">#<%= ped.id %></td>
+                    <td><%= ped.cliente_nome || 'Cliente Balcão' %></td>
+                    <td>
+                      <span class="badge bg-secondary"><%= ped.tipo_pedido %></span>
+                    </td>
+                    <td class="fw-bold text-success">R$ <%= ped.total.toFixed(2) %></td>
+                    <td>
+                      <% if (ped.status === 'FINALIZADO') { %>
+                        <span class="badge bg-success">Finalizado</span>
+                      <% } else if (ped.status === 'EM_PREPARO') { %>
+                        <span class="badge bg-warning text-dark">Em Preparo</span>
+                      <% } else if (ped.status === 'RECEBIDO') { %>
+                        <span class="badge bg-info text-dark">Recebido</span>
+                      <% } else if (ped.status === 'CANCELADO') { %>
+                        <span class="badge bg-danger">Cancelado</span>
+                      <% } else { %>
+                        <span class="badge bg-secondary"><%= ped.status %></span>
+                      <% } %>
+                    </td>
+                    <td>
+                      <a href="/vendas/<%= ped.id %>" class="btn btn-sm btn-outline-primary" title="Ver Pedido">
+                        <i class="fa-solid fa-eye"></i>
+                      </a>
+                      <a href="/vendas/<%= ped.id %>/cupom" target="_blank" class="btn btn-sm btn-outline-secondary" title="Imprimir Cupom">
+                        <i class="fa-solid fa-print"></i>
+                      </a>
+                    </td>
+                  </tr>
+                <% }) %>
+              <% } else { %>
+                <tr>
+                  <td colspan="6" class="text-center py-4 text-muted">Nenhum pedido recente.</td>
+                </tr>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-4">
+    <div class="card h-100">
+      <div class="card-header">
+        <h5 class="mb-0"><i class="fa-solid fa-credit-card me-2 text-warning"></i> Formas de Pagamento</h5>
+      </div>
+      <div class="card-body">
+        <div style="height: 240px; display: flex; align-items: center; justify-content: center;">
+          <canvas id="pagamentoChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Chart.js Data Injection -->
+<script>
+  window.chartData = {
+    vendasDias: <%- JSON.stringify(stats.vendasUltimos7Dias || []) %>,
+    pagamentos: <%- JSON.stringify(stats.formasPagamento || []) %>
+  };
+</script>
+
+<%- include('../layouts/footer') %>

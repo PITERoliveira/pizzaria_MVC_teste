@@ -1,0 +1,143 @@
+<%- include('../layouts/header') %>
+<%- include('../layouts/sidebar') %>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="fw-bold mb-1">Pedido #<%= pedido.id %></h2>
+    <p class="text-muted mb-0">Detalhes completos, itens, status e controle de entrega.</p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="/vendas/<%= pedido.id %>/cupom" target="_blank" class="btn btn-outline-secondary rounded-pill px-4">
+      <i class="fa-solid fa-print me-2"></i> Imprimir Cupom
+    </a>
+    <a href="/vendas" class="btn btn-outline-primary rounded-pill px-4">
+      <i class="fa-solid fa-arrow-left me-2"></i> Voltar às Vendas
+    </a>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-xl-8">
+    <!-- Itens do Pedido -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="mb-0"><i class="fa-solid fa-pizza-slice me-2 text-primary"></i> Itens do Pedido</h5>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table mb-0">
+            <thead>
+              <tr>
+                <th>Item</th>
+                <th>Tamanho</th>
+                <th>Qtd</th>
+                <th>Preço Unit.</th>
+                <th class="text-end">Subtotal</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% if (pedido.itens && pedido.itens.length > 0) { %>
+                <% pedido.itens.forEach(item => { %>
+                  <tr>
+                    <td>
+                      <div class="fw-bold"><%= item.nome_item %></div>
+                      <% if (item.observacao) { %>
+                        <small class="text-warning">Obs: <%= item.observacao %></small>
+                      <% } %>
+                      <% if (item.detalhes_obj) { %>
+                        <div class="small text-muted mt-1">
+                          <span class="badge bg-secondary">Customizada</span>
+                        </div>
+                      <% } %>
+                    </td>
+                    <td><%= item.tamanho || '-' %></td>
+                    <td><%= item.quantidade %></td>
+                    <td>R$ <%= item.preco_unitario.toFixed(2) %></td>
+                    <td class="text-end fw-bold text-success">R$ <%= item.subtotal.toFixed(2) %></td>
+                  </tr>
+                <% }) %>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card-footer bg-transparent py-3">
+        <div class="d-flex justify-content-between mb-1">
+          <span class="text-muted">Subtotal</span>
+          <span>R$ <%= pedido.subtotal.toFixed(2) %></span>
+        </div>
+        <div class="d-flex justify-content-between mb-1">
+          <span class="text-muted">Taxa de Entrega</span>
+          <span>R$ <%= pedido.taxa_entrega.toFixed(2) %></span>
+        </div>
+        <% if (pedido.desconto > 0) { %>
+          <div class="d-flex justify-content-between mb-1">
+            <span class="text-muted">Desconto</span>
+            <span class="text-danger">- R$ <%= pedido.desconto.toFixed(2) %></span>
+          </div>
+        <% } %>
+        <div class="d-flex justify-content-between fw-bold fs-5 pt-2 border-top">
+          <span>Total Pago (<%= pedido.forma_pagamento.replace('_', ' ') %>)</span>
+          <span class="text-success">R$ <%= pedido.total.toFixed(2) %></span>
+        </div>
+        <% if (pedido.forma_pagamento === 'DINHEIRO') { %>
+          <div class="d-flex justify-content-between small text-muted mt-1">
+            <span>Valor Pago: R$ <%= (pedido.valor_pago || 0).toFixed(2) %></span>
+            <span>Troco: R$ <%= (pedido.troco || 0).toFixed(2) %></span>
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-4">
+    <!-- Status e Cliente -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="mb-0"><i class="fa-solid fa-circle-info me-2 text-warning"></i> Status & Destino</h5>
+      </div>
+      <div class="card-body">
+        <div class="mb-3">
+          <label class="form-label small text-muted">Status Atual</label>
+          <form action="/vendas/<%= pedido.id %>/status" method="POST" class="d-flex gap-2">
+            <select class="form-select" name="status">
+              <option value="RECEBIDO" <%= pedido.status === 'RECEBIDO' ? 'selected' : '' %>>Recebido</option>
+              <option value="EM_PREPARO" <%= pedido.status === 'EM_PREPARO' ? 'selected' : '' %>>Em Preparo</option>
+              <option value="PRONTO" <%= pedido.status === 'PRONTO' ? 'selected' : '' %>>Pronto</option>
+              <option value="EM_ENTREGA" <%= pedido.status === 'EM_ENTREGA' ? 'selected' : '' %>>Em Rota / Entrega</option>
+              <option value="FINALIZADO" <%= pedido.status === 'FINALIZADO' ? 'selected' : '' %>>Finalizado</option>
+              <option value="CANCELADO" <%= pedido.status === 'CANCELADO' ? 'selected' : '' %>>Cancelado</option>
+            </select>
+            <button type="submit" class="btn btn-primary">Salvar</button>
+          </form>
+        </div>
+
+        <hr>
+
+        <h6 class="fw-bold mb-2">Informações do Cliente</h6>
+        <% if (pedido.cliente_nome) { %>
+          <div class="d-flex align-items-center gap-3 mb-3">
+            <img src="<%= pedido.cliente_foto || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(pedido.cliente_nome) + '&background=e63946&color=fff' %>" class="rounded-circle" style="width: 45px; height: 45px; object-fit: cover;">
+            <div>
+              <h6 class="mb-0 fw-bold"><%= pedido.cliente_nome %></h6>
+              <small class="text-muted"><%= pedido.cliente_telefone %></small>
+            </div>
+          </div>
+          <% if (pedido.tipo_pedido === 'DELIVERY') { %>
+            <p class="small text-muted mb-1"><strong>Endereço:</strong> <%= pedido.endereco_entrega || 'Não informado' %></p>
+          <% } else if (pedido.tipo_pedido === 'SALAO') { %>
+            <p class="small text-muted mb-1"><strong>Mesa:</strong> <%= pedido.mesa || 'Não informada' %></p>
+          <% } %>
+        <% } else { %>
+          <p class="text-muted small mb-0">Cliente Balcão (Avulso)</p>
+        <% } %>
+
+        <hr>
+
+        <p class="small text-muted mb-0"><i class="fa-solid fa-clock me-1"></i> Data: <%= new Date(pedido.created_at).toLocaleString('pt-BR') %></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../layouts/footer') %>

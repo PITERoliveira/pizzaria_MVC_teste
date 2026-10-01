@@ -1,0 +1,183 @@
+<%- include('../layouts/header') %>
+<%- include('../layouts/sidebar') %>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="fw-bold mb-1">Perfil do Cliente</h2>
+    <p class="text-muted mb-0">Estatísticas detalhadas, endereço e histórico de compras.</p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="/clientes/<%= cliente.id %>/editar" class="btn btn-primary rounded-pill px-4">
+      <i class="fa-solid fa-pen me-2"></i> Editar Cliente
+    </a>
+    <a href="/clientes" class="btn btn-outline-secondary rounded-pill px-4">
+      <i class="fa-solid fa-arrow-left me-2"></i> Voltar
+    </a>
+  </div>
+</div>
+
+<div class="row g-4">
+  <!-- Card com Foto e Perfil -->
+  <div class="col-xl-4">
+    <div class="card text-center py-4 px-3 mb-4">
+      <div class="position-relative d-inline-block mx-auto mb-3">
+        <img src="<%= cliente.foto || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(cliente.nome) + '&background=e63946&color=fff&size=200' %>" alt="<%= cliente.nome %>" class="rounded-circle border border-3 border-danger shadow-sm" style="width: 130px; height: 130px; object-fit: cover;">
+      </div>
+      <h4 class="fw-bold mb-1"><%= cliente.nome %></h4>
+      <p class="text-muted mb-2"><i class="fa-solid fa-phone me-1"></i> <%= cliente.telefone %></p>
+      
+      <% if (cliente.email) { %>
+        <p class="text-muted small mb-3"><i class="fa-solid fa-envelope me-1"></i> <%= cliente.email %></p>
+      <% } %>
+
+      <div class="d-flex justify-content-center gap-2 mb-3">
+        <a href="https://wa.me/55<%= cliente.telefone.replace(/\D/g, '') %>" target="_blank" class="btn btn-sm btn-success rounded-pill px-3">
+          <i class="fa-brands fa-whatsapp me-1"></i> WhatsApp
+        </a>
+        <a href="/vendas/pdv?cliente=<%= cliente.id %>" class="btn btn-sm btn-primary rounded-pill px-3">
+          <i class="fa-solid fa-cart-shopping me-1"></i> Criar Pedido
+        </a>
+      </div>
+
+      <hr>
+
+      <div class="text-start px-2">
+        <h6 class="fw-bold text-uppercase small text-muted mb-3"><i class="fa-solid fa-map-marker-alt me-1 text-danger"></i> Endereço Principal</h6>
+        <p class="mb-1 fw-medium"><%= cliente.logradouro ? cliente.logradouro + ', ' + (cliente.numero || 'S/N') : 'Endereço não cadastrado' %></p>
+        <p class="mb-1 text-muted small"><%= cliente.complemento ? 'Comp: ' + cliente.complemento + ' | ' : '' %> Bairro: <%= cliente.bairro || '-' %></p>
+        <p class="mb-2 text-muted small"><%= cliente.cidade || 'SP' %> <%= cliente.cep ? '- CEP: ' + cliente.cep : '' %></p>
+        <% if (cliente.ponto_referencia) { %>
+          <div class="alert alert-dark p-2 mb-0 small text-muted border-0" style="background: rgba(255, 255, 255, 0.05);">
+            <strong>Ref:</strong> <%= cliente.ponto_referencia %>
+          </div>
+        <% } %>
+      </div>
+
+      <% if (cliente.observacoes) { %>
+        <hr>
+        <div class="text-start px-2">
+          <h6 class="fw-bold text-uppercase small text-muted mb-2"><i class="fa-solid fa-note-sticky me-1 text-warning"></i> Observações / Preferências</h6>
+          <p class="small text-muted mb-0"><%= cliente.observacoes %></p>
+        </div>
+      <% } %>
+    </div>
+  </div>
+
+  <!-- Cards de Estatísticas e Histórico de Compras -->
+  <div class="col-xl-8">
+    <div class="row g-3 mb-4">
+      <div class="col-md-3">
+        <div class="stat-card p-3">
+          <div class="stat-info">
+            <h5>Total Pedidos</h5>
+            <h3><%= cliente.total_pedidos %></h3>
+          </div>
+          <div class="stat-icon primary" style="width: 48px; height: 48px; font-size: 1.25rem;">
+            <i class="fa-solid fa-bag-shopping"></i>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-3">
+        <div class="stat-card p-3">
+          <div class="stat-info">
+            <h5>Total Gasto</h5>
+            <h3 class="text-success">R$ <%= cliente.total_gasto.toFixed(2) %></h3>
+          </div>
+          <div class="stat-icon success" style="width: 48px; height: 48px; font-size: 1.25rem;">
+            <i class="fa-solid fa-hand-holding-dollar"></i>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-3">
+        <div class="stat-card p-3">
+          <div class="stat-info">
+            <h5>Ticket Médio</h5>
+            <h3>R$ <%= cliente.ticket_medio.toFixed(2) %></h3>
+          </div>
+          <div class="stat-icon info" style="width: 48px; height: 48px; font-size: 1.25rem;">
+            <i class="fa-solid fa-calculator"></i>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-3">
+        <div class="stat-card p-3">
+          <div class="stat-info">
+            <h5>Sabor Favorito</h5>
+            <h6 class="fw-bold text-accent mb-0 mt-1" style="font-size: 0.95rem; line-height: 1.2;"><%= cliente.sabor_favorito %></h6>
+          </div>
+          <div class="stat-icon warning" style="width: 48px; height: 48px; font-size: 1.25rem;">
+            <i class="fa-solid fa-star"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabela de Histórico de Pedidos -->
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="fa-solid fa-clock-rotate-left me-2 text-primary"></i> Histórico de Compras do Cliente</h5>
+        <span class="badge bg-secondary"><%= cliente.pedidos?.length || 0 %> registros</span>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead>
+              <tr>
+                <th>Nº Pedido</th>
+                <th>Data / Hora</th>
+                <th>Tipo</th>
+                <th>Itens</th>
+                <th>Total</th>
+                <th>Status</th>
+                <th class="text-end">Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% if (cliente.pedidos && cliente.pedidos.length > 0) { %>
+                <% cliente.pedidos.forEach(ped => { %>
+                  <tr>
+                    <td class="fw-bold">#<%= ped.id %></td>
+                    <td><%= new Date(ped.created_at).toLocaleString('pt-BR') %></td>
+                    <td>
+                      <span class="badge bg-secondary"><%= ped.tipo_pedido %></span>
+                    </td>
+                    <td><%= ped.total_itens %> item(ns)</td>
+                    <td class="fw-bold text-success">R$ <%= ped.total.toFixed(2) %></td>
+                    <td>
+                      <% if (ped.status === 'FINALIZADO') { %>
+                        <span class="badge bg-success">Finalizado</span>
+                      <% } else if (ped.status === 'EM_PREPARO') { %>
+                        <span class="badge bg-warning text-dark">Em Preparo</span>
+                      <% } else if (ped.status === 'CANCELADO') { %>
+                        <span class="badge bg-danger">Cancelado</span>
+                      <% } else { %>
+                        <span class="badge bg-info text-dark"><%= ped.status %></span>
+                      <% } %>
+                    </td>
+                    <td class="text-end">
+                      <a href="/vendas/<%= ped.id %>" class="btn btn-sm btn-outline-primary" title="Ver Pedido">
+                        <i class="fa-solid fa-eye"></i>
+                      </a>
+                      <a href="/vendas/<%= ped.id %>/cupom" target="_blank" class="btn btn-sm btn-outline-secondary" title="Imprimir Cupom">
+                        <i class="fa-solid fa-print"></i>
+                      </a>
+                    </td>
+                  </tr>
+                <% }) %>
+              <% } else { %>
+                <tr>
+                  <td colspan="7" class="text-center py-4 text-muted">Este cliente ainda não realizou nenhum pedido.</td>
+                </tr>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../layouts/footer') %>

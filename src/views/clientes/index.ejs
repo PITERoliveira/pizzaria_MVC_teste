@@ -1,0 +1,98 @@
+<%- include('../layouts/header') %>
+<%- include('../layouts/sidebar') %>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="fw-bold mb-1">Clientes Cadastrados</h2>
+    <p class="text-muted mb-0">Gerencie sua base de clientes, visualize fotos, endereços e histórico de compras.</p>
+  </div>
+  <a href="/clientes/novo" class="btn btn-primary rounded-pill px-4 shadow-sm">
+    <i class="fa-solid fa-user-plus me-2"></i> Novo Cliente
+  </a>
+</div>
+
+<!-- Barra de Busca -->
+<div class="card mb-4">
+  <div class="card-body">
+    <form action="/clientes" method="GET" class="row g-3">
+      <div class="col-md-10">
+        <div class="input-group">
+          <span class="input-group-text bg-transparent border-end-0"><i class="fa-solid fa-search text-muted"></i></span>
+          <input type="text" class="form-control border-start-0 ps-0" name="search" value="<%= search %>" placeholder="Buscar por nome, telefone, CPF, e-mail ou bairro...">
+        </div>
+      </div>
+      <div class="col-md-2">
+        <button type="submit" class="btn btn-primary w-100">Pesquisar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Tabela de Clientes -->
+<div class="card">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>Cliente</th>
+            <th>Contato</th>
+            <th>Endereço / Bairro</th>
+            <th>Compras</th>
+            <th>Total Gasto</th>
+            <th>Última Compra</th>
+            <th class="text-end">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (clientes && clientes.length > 0) { %>
+            <% clientes.forEach(cli => { %>
+              <tr>
+                <td>
+                  <div class="d-flex align-items-center gap-3">
+                    <img src="<%= cli.foto || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(cli.nome) + '&background=e63946&color=fff' %>" alt="<%= cli.nome %>" class="rounded-circle" style="width: 45px; height: 45px; object-fit: cover;">
+                    <div>
+                      <h6 class="mb-0 fw-bold"><%= cli.nome %></h6>
+                      <small class="text-muted"><%= cli.cpf || 'CPF não informado' %></small>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div><%= cli.telefone %></div>
+                  <small class="text-muted"><%= cli.email || '-' %></small>
+                </td>
+                <td>
+                  <div><%= cli.bairro || 'Bairro não inf.' %> - <%= cli.cidade || 'SP' %></div>
+                  <small class="text-muted"><%= cli.logradouro ? cli.logradouro + ', ' + (cli.numero || 'S/N') : '-' %></small>
+                </td>
+                <td>
+                  <span class="badge bg-secondary"><%= cli.total_pedidos %> pedidos</span>
+                </td>
+                <td class="fw-bold text-success">
+                  R$ <%= cli.total_gasto.toFixed(2) %>
+                </td>
+                <td>
+                  <%= cli.ultima_compra ? new Date(cli.ultima_compra).toLocaleDateString('pt-BR') : 'Nunca' %>
+                </td>
+                <td class="text-end">
+                  <a href="/clientes/<%= cli.id %>" class="btn btn-sm btn-outline-info" title="Ver Perfil Completo">
+                    <i class="fa-solid fa-eye"></i>
+                  </a>
+                  <a href="/clientes/<%= cli.id %>/editar" class="btn btn-sm btn-outline-primary" title="Editar">
+                    <i class="fa-solid fa-pen"></i>
+                  </a>
+                </td>
+              </tr>
+            <% }) %>
+          <% } else { %>
+            <tr>
+              <td colspan="7" class="text-center py-5 text-muted">Nenhum cliente encontrado.</td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<%- include('../layouts/footer') %>

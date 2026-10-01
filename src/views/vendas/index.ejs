@@ -1,0 +1,139 @@
+<%- include('../layouts/header') %>
+<%- include('../layouts/sidebar') %>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="fw-bold mb-1">Gerenciamento de Vendas e Pedidos</h2>
+    <p class="text-muted mb-0">Acompanhe todos os pedidos recebidos, altere status (Preparo, Entrega, Finalizado) e imprima cupons.</p>
+  </div>
+  <a href="/vendas/pdv" class="btn btn-primary rounded-pill px-4 shadow-sm">
+    <i class="fa-solid fa-cash-register me-2"></i> Novo Pedido / PDV
+  </a>
+</div>
+
+<!-- Filtros -->
+<div class="card mb-4">
+  <div class="card-body">
+    <form action="/vendas" method="GET" class="row g-3 align-items-center">
+      <div class="col-md-3">
+        <label class="form-label small text-muted">Status do Pedido</label>
+        <select class="form-select" name="status" onchange="this.form.submit()">
+          <option value="TODOS" <%= statusSelecionado === 'TODOS' ? 'selected' : '' %>>Todos os Status</option>
+          <option value="RECEBIDO" <%= statusSelecionado === 'RECEBIDO' ? 'selected' : '' %>>Recebido</option>
+          <option value="EM_PREPARO" <%= statusSelecionado === 'EM_PREPARO' ? 'selected' : '' %>>Em Preparo</option>
+          <option value="PRONTO" <%= statusSelecionado === 'PRONTO' ? 'selected' : '' %>>Pronto</option>
+          <option value="EM_ENTREGA" <%= statusSelecionado === 'EM_ENTREGA' ? 'selected' : '' %>>Em Rota / Entrega</option>
+          <option value="FINALIZADO" <%= statusSelecionado === 'FINALIZADO' ? 'selected' : '' %>>Finalizado</option>
+          <option value="CANCELADO" <%= statusSelecionado === 'CANCELADO' ? 'selected' : '' %>>Cancelado</option>
+        </select>
+      </div>
+
+      <div class="col-md-3">
+        <label class="form-label small text-muted">Tipo de Pedido</label>
+        <select class="form-select" name="tipo" onchange="this.form.submit()">
+          <option value="TODOS" <%= tipoSelecionado === 'TODOS' ? 'selected' : '' %>>Todos os Tipos</option>
+          <option value="DELIVERY" <%= tipoSelecionado === 'DELIVERY' ? 'selected' : '' %>>Delivery</option>
+          <option value="BALCAO" <%= tipoSelecionado === 'BALCAO' ? 'selected' : '' %>>Balcão</option>
+          <option value="SALAO" <%= tipoSelecionado === 'SALAO' ? 'selected' : '' %>>Salão / Mesa</option>
+        </select>
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label small text-muted">Buscar por Cliente / Nº</label>
+        <div class="input-group">
+          <input type="text" class="form-control" name="search" value="<%= search %>" placeholder="Nome do cliente, telefone ou ID do pedido...">
+          <button type="submit" class="btn btn-primary"><i class="fa-solid fa-search"></i></button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Tabela de Pedidos -->
+<div class="card">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>Pedido</th>
+            <th>Cliente</th>
+            <th>Tipo / Destino</th>
+            <th>Pagamento</th>
+            <th>Total</th>
+            <th>Status</th>
+            <th>Data / Hora</th>
+            <th class="text-end">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (pedidos && pedidos.length > 0) { %>
+            <% pedidos.forEach(ped => { %>
+              <tr>
+                <td class="fw-bold">#<%= ped.id %></td>
+                <td>
+                  <div class="fw-bold"><%= ped.cliente_nome || 'Cliente Balcão' %></div>
+                  <small class="text-muted"><%= ped.cliente_telefone || '-' %></small>
+                </td>
+                <td>
+                  <span class="badge bg-secondary"><%= ped.tipo_pedido %></span>
+                  <% if (ped.tipo_pedido === 'DELIVERY') { %>
+                    <div class="small text-muted"><%= ped.endereco_entrega ? ped.endereco_entrega.substring(0, 30) + '...' : 'Endereço não informado' %></div>
+                  <% } else if (ped.tipo_pedido === 'SALAO') { %>
+                    <div class="small text-muted"><%= ped.mesa || 'Mesa não informada' %></div>
+                  <% } %>
+                </td>
+                <td>
+                  <div><%= ped.forma_pagamento.replace('_', ' ') %></div>
+                  <small class="text-muted"><%= ped.taxa_entrega > 0 ? '+ R$ ' + ped.taxa_entrega.toFixed(2) + ' entrega' : 'Sem taxa' %></small>
+                </td>
+                <td class="fw-bold text-success fs-6">
+                  R$ <%= ped.total.toFixed(2) %>
+                </td>
+                <td>
+                  <% if (ped.status === 'FINALIZADO') { %>
+                    <span class="badge bg-success">Finalizado</span>
+                  <% } else if (ped.status === 'EM_PREPARO') { %>
+                    <span class="badge bg-warning text-dark">Em Preparo</span>
+                  <% } else if (ped.status === 'PRONTO') { %>
+                    <span class="badge bg-info text-dark">Pronto</span>
+                  <% } else if (ped.status === 'EM_ENTREGA') { %>
+                    <span class="badge bg-primary">Em Rota</span>
+                  <% } else if (ped.status === 'RECEBIDO') { %>
+                    <span class="badge bg-secondary">Recebido</span>
+                  <% } else if (ped.status === 'CANCELADO') { %>
+                    <span class="badge bg-danger">Cancelado</span>
+                  <% } %>
+                </td>
+                <td class="text-muted small">
+                  <%= new Date(ped.created_at).toLocaleString('pt-BR') %>
+                </td>
+                <td class="text-end">
+                  <a href="/vendas/<%= ped.id %>" class="btn btn-sm btn-outline-primary" title="Ver Detalhes">
+                    <i class="fa-solid fa-eye"></i>
+                  </a>
+                  <a href="/vendas/<%= ped.id %>/cupom" target="_blank" class="btn btn-sm btn-outline-secondary" title="Imprimir Cupom">
+                    <i class="fa-solid fa-print"></i>
+                  </a>
+                  <% if (ped.status !== 'CANCELADO' && ped.status !== 'FINALIZADO') { %>
+                    <form action="/vendas/<%= ped.id %>/cancelar" method="POST" class="d-inline" onsubmit="return confirm('Deseja cancelar este pedido? O estoque será estornado.');">
+                      <button type="submit" class="btn btn-sm btn-outline-danger" title="Cancelar Pedido">
+                        <i class="fa-solid fa-ban"></i>
+                      </button>
+                    </form>
+                  <% } %>
+                </td>
+              </tr>
+            <% }) %>
+          <% } else { %>
+            <tr>
+              <td colspan="8" class="text-center py-5 text-muted">Nenhum pedido encontrado com os filtros selecionados.</td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<%- include('../layouts/footer') %>

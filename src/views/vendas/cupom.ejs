@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Cupom Pedido #<%= pedido.id %> - Bella Pizza</title>
+  <style>
+    body {
+      font-family: 'Courier New', Courier, monospace;
+      width: 300px;
+      margin: 0 auto;
+      padding: 10px;
+      background: #fff;
+      color: #000;
+      font-size: 12px;
+    }
+    .center { text-align: center; }
+    .bold { font-weight: bold; }
+    .line { border-bottom: 1px dashed #000; margin: 8px 0; }
+    .flex { display: flex; justify-content: space-between; }
+    @media print {
+      body { width: 100%; padding: 0; }
+      .no-print { display: none; }
+    }
+  </style>
+</head>
+<body onload="window.print()">
+  <div class="center">
+    <div class="bold" style="font-size: 16px;">BELLA PIZZA SYSTEM</div>
+    <div>CNPJ: 12.345.678/0001-99</div>
+    <div>Av. Principal, 1000 - São Paulo - SP</div>
+    <div>Tel: (11) 3333-4444</div>
+  </div>
+
+  <div class="line"></div>
+
+  <div class="center bold">EXTRATO DE PEDIDO #<%= pedido.id %></div>
+  <div>Data: <%= new Date(pedido.created_at).toLocaleString('pt-BR') %></div>
+  <div>Tipo: <%= pedido.tipo_pedido %></div>
+  <% if (pedido.cliente_nome) { %>
+    <div>Cliente: <%= pedido.cliente_nome %></div>
+    <div>Tel: <%= pedido.cliente_telefone %></div>
+  <% } %>
+  <% if (pedido.tipo_pedido === 'DELIVERY' && pedido.endereco_entrega) { %>
+    <div>End: <%= pedido.endereco_entrega %></div>
+  <% } else if (pedido.tipo_pedido === 'SALAO' && pedido.mesa) { %>
+    <div>Mesa: <%= pedido.mesa %></div>
+  <% } %>
+
+  <div class="line"></div>
+
+  <div>
+    <div class="bold flex"><span>QTD ITEM</span><span>TOTAL</span></div>
+    <% pedido.itens.forEach(item => { %>
+      <div class="flex">
+        <span><%= item.quantidade %>x <%= item.nome_item %></span>
+        <span>R$ <%= item.subtotal.toFixed(2) %></span>
+      </div>
+      <% if (item.observacao) { %>
+        <div style="font-size: 10px; font-style: italic;">Obs: <%= item.observacao %></div>
+      <% } %>
+    <% }) %>
+  </div>
+
+  <div class="line"></div>
+
+  <div class="flex"><span>Subtotal:</span><span>R$ <%= pedido.subtotal.toFixed(2) %></span></div>
+  <% if (pedido.taxa_entrega > 0) { %>
+    <div class="flex"><span>Taxa Entrega:</span><span>R$ <%= pedido.taxa_entrega.toFixed(2) %></span></div>
+  <% } %>
+  <% if (pedido.desconto > 0) { %>
+    <div class="flex"><span>Desconto:</span><span>- R$ <%= pedido.desconto.toFixed(2) %></span></div>
+  <% } %>
+  <div class="flex bold" style="font-size: 14px;"><span>TOTAL:</span><span>R$ <%= pedido.total.toFixed(2) %></span></div>
+
+  <div class="line"></div>
+
+  <div>Forma Pgto: <%= pedido.forma_pagamento.replace('_', ' ') %></div>
+  <% if (pedido.forma_pagamento === 'DINHEIRO') { %>
+    <div class="flex"><span>Valor Pago:</span><span>R$ <%= (pedido.valor_pago || 0).toFixed(2) %></span></div>
+    <div class="flex"><span>Troco:</span><span>R$ <%= (pedido.troco || 0).toFixed(2) %></span></div>
+  <% } %>
+
+  <div class="line"></div>
+
+  <div class="center" style="margin-top: 15px;">
+    <div>Obrigado pela preferência!</div>
+    <div>Volte sempre!</div>
+  </div>
+
+  <div class="center no-print" style="margin-top: 20px;">
+    <button onclick="window.print()" style="padding: 10px 20px; font-weight: bold; cursor: pointer;">Imprimir Novamente</button>
+  </div>
+</body>
+</html>

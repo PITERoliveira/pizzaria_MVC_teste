@@ -1,0 +1,249 @@
+<%- include('../layouts/header') %>
+<%- include('../layouts/sidebar') %>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="fw-bold mb-1"><%= pizza ? 'Editar Pizza' : 'Nova Pizza no Cardápio' %></h2>
+    <p class="text-muted mb-0">Configure preços por tamanho e defina a receita (ingredientes) para controle de custo e estoque.</p>
+  </div>
+  <a href="/pizzas" class="btn btn-outline-secondary rounded-pill px-4">
+    <i class="fa-solid fa-arrow-left me-2"></i> Voltar
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-xl-8">
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="mb-0"><i class="fa-solid fa-pizza-slice me-2"></i> Dados da Pizza</h5>
+      </div>
+      <div class="card-body">
+        <form action="<%= pizza ? '/pizzas/' + pizza.id + '/editar' : '/pizzas/nova' %>" method="POST" enctype="multipart/form-data" class="row g-3" id="formPizza">
+          <% if (pizza && pizza.imagem) { %>
+            <input type="hidden" name="imagem" value="<%= pizza.imagem %>">
+          <% } %>
+
+          <div class="col-md-8">
+            <label class="form-label">Nome da Pizza <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" name="nome" value="<%= pizza?.nome || '' %>" required placeholder="Ex: Calabresa Especial, Quatro Queijos...">
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label">Categoria</label>
+            <select class="form-select" name="categoria">
+              <% categorias.forEach(cat => { %>
+                <option value="<%= cat %>" <%= pizza?.categoria === cat ? 'selected' : '' %>><%= cat %></option>
+              <% }) %>
+            </select>
+          </div>
+
+          <div class="col-12">
+            <label class="form-label">Descrição para o Cardápio</label>
+            <textarea class="form-control" name="descricao" rows="3" placeholder="Descreva os ingredientes e diferenciais desta pizza..."><%= pizza?.descricao || '' %></textarea>
+          </div>
+
+          <hr>
+
+          <h6 class="fw-bold mb-3">Preços por Tamanho (R$)</h6>
+          <div class="col-md-3">
+            <label class="form-label">Brotinho</label>
+            <input type="number" step="0.01" class="form-control" name="preco_brotinho" value="<%= pizza?.preco_brotinho || 0 %>">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Média</label>
+            <input type="number" step="0.01" class="form-control" name="preco_media" value="<%= pizza?.preco_media || 0 %>">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Grande</label>
+            <input type="number" step="0.01" class="form-control" name="preco_grande" value="<%= pizza?.preco_grande || 0 %>">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Família</label>
+            <input type="number" step="0.01" class="form-control" name="preco_familia" value="<%= pizza?.preco_familia || 0 %>">
+          </div>
+
+          <hr>
+
+          <div class="col-md-6">
+            <label class="form-label">Imagem da Pizza</label>
+            <input type="file" class="form-control" name="imagem_upload" accept="image/*">
+            <div class="form-text">Formatos: JPG, PNG, WEBP. Máx. 5MB.</div>
+          </div>
+
+          <div class="col-md-6 d-flex align-items-end">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" name="ativa" id="ativaCheck" <%= (pizza ? pizza.ativa : 1) ? 'checked' : '' %>>
+              <label class="form-check-label" for="ativaCheck">Pizza Ativa no Cardápio / PDV</label>
+            </div>
+          </div>
+
+          <div class="col-12">
+            <button type="submit" class="btn btn-primary btn-lg px-5">
+              <i class="fa-solid fa-save me-2"></i> <%= pizza ? 'Atualizar' : 'Salvar Pizza' %>
+            </button>
+            <a href="/pizzas" class="btn btn-outline-secondary btn-lg px-5 ms-2">Cancelar</a>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Receita / Ingredientes -->
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="fa-solid fa-receipt me-2 text-warning"></i> Receita Padrão (Ingredientes da Pizza)</h5>
+        <small class="text-muted">Usado para baixa automática de estoque ao vender esta pizza</small>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-hover" id="tabelaReceita">
+            <thead>
+              <tr>
+                <th style="width: 40%">Ingrediente</th>
+                <th style="width: 15%">Categoria</th>
+                <th style="width: 20%">Quantidade Padrão</th>
+                <th style="width: 15%">Unidade</th>
+                <th style="width: 10%">Ação</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% if (pizza && pizza.ingredientes && pizza.ingredientes.length > 0) { %>
+                <% pizza.ingredientes.forEach((ing, index) => { %>
+                  <tr data-rel-id="<%= ing.rel_id %>">
+                    <td>
+                      <select class="form-select" name="ingredientes_ids" required onchange="atualizarUnidade(this)">
+                        <option value="">Selecione um ingrediente</option>
+                        <% ingredientes.filter(i => i.ativo).forEach(i => { %>
+                          <option value="<%= i.id %>" <%= ing.ingrediente_id === i.id ? 'selected' : '' %> data-unidade="<%= i.unidade_medida %>"><%= i.nome %></option>
+                        <% }) %>
+                      </select>
+                    </td>
+                    <td class="text-muted" id="cat-<%= index %>"><%= ing.categoria %></td>
+                    <td><input type="number" step="0.1" class="form-control" name="ingredientes_qtds" value="<%= ing.quantidade_padrao %>" required></td>
+                    <td class="text-muted" id="uni-<%= index %>"><%= ing.unidade_medida %></td>
+                    <td>
+                      <button type="button" class="btn btn-sm btn-outline-danger" onclick="removerLinhaReceita(this)">
+                        <i class="fa-solid fa-trash"></i>
+                      </button>
+                    </td>
+                  </tr>
+                <% }) %>
+              <% } else { %>
+                <tr>
+                  <td colspan="5" class="text-center py-3 text-muted">Nenhum ingrediente adicionado à receita</td>
+                </tr>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+
+        <button type="button" class="btn btn-outline-primary" onclick="adicionarLinhaReceita()">
+          <i class="fa-solid fa-plus me-2"></i> Adicionar Ingrediente à Receita
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-4">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="mb-0"><i class="fa-solid fa-circle-info me-2"></i> Dicas Importantes</h5>
+      </div>
+      <div class="card-body">
+        <h6 class="fw-bold">Receita e Estoque</h6>
+        <ul class="small text-muted">
+          <li>A receita define os ingredientes que compõem <strong>1 pizza Grande padrão</strong>.</li>
+          <li>Ao vender outros tamanhos, o sistema aplica fatores automaticamente:</li>
+        </ul>
+        <div class="row g-1 small text-muted mb-3">
+          <div class="col-6"><i class="fa-solid fa-circle text-success me-1"></i> Brotinho: 50%</div>
+          <div class="col-6"><i class="fa-solid fa-circle text-info me-1"></i> Média: 75%</div>
+          <div class="col-6"><i class="fa-solid fa-circle text-warning me-1"></i> Grande: 100%</div>
+          <div class="col-6"><i class="fa-solid fa-circle text-danger me-1"></i> Família: 130%</div>
+        </div>
+
+        <h6 class="fw-bold">Preços Sugeridos</h6>
+        <ul class="small text-muted">
+          <li><strong>Tradicional:</strong> Margem ~300% (ex: custo R$ 15 → preço R$ 45)</li>
+          <li><strong>Especial/Premium:</strong> Margem ~250% (ingredientes mais nobres)</li>
+          <li><strong>Bebidas:</strong> Margem ~80-100%</li>
+        </ul>
+
+        <hr>
+
+        <h6 class="fw-bold">Imagem da Pizza</h6>
+        <p class="small text-muted">Use fotos reais ou imagens de alta qualidade (proporção 4:3 ou 16:9). Tamanho recomendado: 800x600px.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let receitaIndex = 0;
+
+  function atualizarUnidade(select) {
+    const row = select.closest('tr');
+    const option = select.options[select.selectedIndex];
+    const unidade = option.getAttribute('data-unidade');
+    
+    // Encontrar categoria do ingrediente
+    const ingredienteId = select.value;
+    const ingrediente = <%= JSON.stringify(ingredientes) %>.find(i => i.id == ingredienteId);
+    
+    if (ingrediente) {
+      row.querySelector('[id^="cat-"]').textContent = ingrediente.categoria;
+      row.querySelector('[id^="uni-"]').textContent = ingrediente.unidade_medida;
+    }
+  }
+
+  function adicionarLinhaReceita() {
+    const tbody = document.querySelector('#tabelaReceita tbody');
+    
+    // Remover mensagem de vazio se existir
+    const emptyRow = tbody.querySelector('td[colspan="5"]');
+    if (emptyRow) emptyRow.closest('tr').remove();
+
+    const newIndex = Date.now();
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>
+        <select class="form-select" name="ingredientes_ids" required onchange="atualizarUnidade(this)">
+          <option value="">Selecione um ingrediente</option>
+          <% ingredientes.filter(i => i.ativo).forEach(i => { %>
+            <option value="<%= i.id %>" data-unidade="<%= i.unidade_medida %>"><%= i.nome %></option>
+          <% }) %>
+        </select>
+      </td>
+      <td class="text-muted" id="cat-${newIndex}">-</td>
+      <td><input type="number" step="0.1" class="form-control" name="ingredientes_qtds" value="0" required></td>
+      <td class="text-muted" id="uni-${newIndex}">-</td>
+      <td><button type="button" class="btn btn-sm btn-outline-danger" onclick="removerLinhaReceita(this)"><i class="fa-solid fa-trash"></i></button></td>
+    `;
+    tbody.appendChild(row);
+  }
+
+  function removerLinhaReceita(btn) {
+    const tbody = document.querySelector('#tabelaReceita tbody');
+    btn.closest('tr').remove();
+    
+    if (tbody.children.length === 0) {
+      const row = document.createElement('tr');
+      row.innerHTML = '<td colspan="5" class="text-center py-3 text-muted">Nenhum ingrediente adicionado à receita</td>';
+      tbody.appendChild(row);
+    }
+  }
+
+  // Preview imagem
+  document.querySelector('input[name="imagem_upload"]').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        // Apenas aviso visual
+        console.log('Imagem selecionada:', file.name);
+      }
+      reader.readAsDataURL(file);
+    }
+  });
+</script>
+
+<%- include('../layouts/footer') %>

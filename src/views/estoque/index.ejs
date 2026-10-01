@@ -1,0 +1,163 @@
+<%- include('../layouts/header') %>
+<%- include('../layouts/sidebar') %>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="fw-bold mb-1">Controle de Estoque & Insumos</h2>
+    <p class="text-muted mb-0">Monitore ingredientes, baixas automáticas em vendas e alertas de estoque crítico.</p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="/estoque/movimentacoes" class="btn btn-outline-info rounded-pill px-3">
+      <i class="fa-solid fa-list-check me-2"></i> Histórico de Movimentações
+    </a>
+    <a href="/estoque/novo" class="btn btn-primary rounded-pill px-4 shadow-sm">
+      <i class="fa-solid fa-plus me-2"></i> Novo Ingrediente
+    </a>
+  </div>
+</div>
+
+<!-- Filtros e Alertas -->
+<div class="card mb-4">
+  <div class="card-body">
+    <form action="/estoque" method="GET" class="row g-3 align-items-center">
+      <div class="col-md-4">
+        <label class="form-label small text-muted">Categoria</label>
+        <select class="form-select" name="categoria" onchange="this.form.submit()">
+          <option value="todas" <%= categoriaSelecionada === 'todas' ? 'selected' : '' %>>Todas as Categorias</option>
+          <% categorias.forEach(cat => { %>
+            <option value="<%= cat %>" <%= categoriaSelecionada === cat ? 'selected' : '' %>><%= cat %></option>
+          <% }) %>
+        </select>
+      </div>
+
+      <div class="col-md-5">
+        <label class="form-label small text-muted">Buscar por Nome</label>
+        <div class="input-group">
+          <input type="text" class="form-control" name="search" value="<%= search %>" placeholder="Ex: Queijo Mussarela, Calabresa, Coca-Cola...">
+          <button type="submit" class="btn btn-primary"><i class="fa-solid fa-search"></i></button>
+        </div>
+      </div>
+
+      <div class="col-md-3 text-end pt-4">
+        <a href="/estoque?alerta=true" class="btn <%= apenasEstoqueBaixo ? 'btn-warning' : 'btn-outline-warning' %> w-100">
+          <i class="fa-solid fa-triangle-exclamation me-2"></i> Alertas de Estoque (<%= totalAlertas %>)
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Tabela de Insumos -->
+<div class="card">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>Ingrediente / Insumo</th>
+            <th>Categoria</th>
+            <th>Qtd em Estoque</th>
+            <th>Estoque Mínimo</th>
+            <th>Status</th>
+            <th>Custo Unit.</th>
+            <th>Preço Adicional</th>
+            <th class="text-end">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (ingredientes && ingredientes.length > 0) { %>
+            <% ingredientes.forEach(ing => { %>
+              <% 
+                const porcentagem = ing.estoque_minimo > 0 ? (ing.quantidade_estoque / ing.estoque_minimo) : 10;
+                let statusBadge = '<span class="badge bg-success"><i class="fa-solid fa-check me-1"></i> OK</span>';
+                if (ing.quantidade_estoque <= 0) {
+                  statusBadge = '<span class="badge bg-danger"><i class="fa-solid fa-circle-xmark me-1"></i> Esgotado</span>';
+                } else if (ing.quantidade_estoque <= ing.estoque_minimo) {
+                  statusBadge = '<span class="badge bg-warning text-dark"><i class="fa-solid fa-triangle-exclamation me-1"></i> Crítico</span>';
+                }
+              %>
+              <tr>
+                <td class="fw-bold"><%= ing.nome %></td>
+                <td><span class="badge bg-secondary"><%= ing.categoria %></span></td>
+                <td>
+                  <span class="fs-6 fw-bold <%= ing.quantidade_estoque <= ing.estoque_minimo ? 'text-danger' : 'text-white' %>">
+                    <%= ing.quantidade_estoque %> <%= ing.unidade_medida %>
+                  </span>
+                </td>
+                <td class="text-muted"><%= ing.estoque_minimo %> <%= ing.unidade_medida %></td>
+                <td><%- statusBadge %></td>
+                <td>R$ <%= ing.custo_unitario.toFixed(3) %> / <%= ing.unidade_medida %></td>
+                <td>R$ <%= ing.preco_adicional.toFixed(2) %></td>
+                <td class="text-end">
+                  <button type="button" class="btn btn-sm btn-outline-success" onclick="abrirModalAjuste(<%= ing.id %>, '<%= ing.nome %>', '<%= ing.unidade_medida %>')" title="Entrada / Saída Manual">
+                    <i class="fa-solid fa-right-left"></i> Ajustar
+                  </button>
+                  <a href="/estoque/<%= ing.id %>/editar" class="btn btn-sm btn-outline-primary" title="Editar">
+                    <i class="fa-solid fa-pen"></i>
+                  </a>
+                </td>
+              </tr>
+            <% }) %>
+          <% } else { %>
+            <tr>
+              <td colspan="8" class="text-center py-5 text-muted">Nenhum ingrediente cadastrado ou encontrado.</td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Ajuste de Estoque -->
+<div class="modal fade" id="modalAjuste" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content bg-dark text-white border-secondary">
+      <div class="modal-header border-secondary">
+        <h5 class="modal-title" id="modalAjusteTitulo">Ajustar Estoque</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <form action="/estoque/ajuste" method="POST">
+        <div class="modal-body">
+          <input type="hidden" name="id" id="ajusteIngredienteId">
+          
+          <div class="mb-3">
+            <label class="form-label text-muted">Tipo de Movimentação</label>
+            <select class="form-select" name="tipo" required>
+              <option value="ENTRADA">Entrada / Compra de Insumo (+)</option>
+              <option value="SAIDA_MANUAL">Saída Manual / Perda (-)</option>
+              <option value="AJUSTE">Ajuste de Balanço (Definir Valor Exato)</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label text-muted">Quantidade (<span id="ajusteUnidade">g</span>)</label>
+            <input type="number" step="0.01" class="form-control" name="quantidade" required placeholder="Digite a quantidade">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label text-muted">Motivo / Observação</label>
+            <input type="text" class="form-control" name="motivo" placeholder="Ex: Compra NF 1029, Validade vencida, etc.">
+          </div>
+        </div>
+        <div class="modal-footer border-secondary">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Salvar Movimentação</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  function abrirModalAjuste(id, nome, unidade) {
+    document.getElementById('ajusteIngredienteId').value = id;
+    document.getElementById('modalAjusteTitulo').innerText = 'Ajustar Estoque: ' + nome;
+    document.getElementById('ajusteUnidade').innerText = unidade;
+    
+    const modal = new bootstrap.Modal(document.getElementById('modalAjuste'));
+    modal.show();
+  }
+</script>
+
+<%- include('../layouts/footer') %>

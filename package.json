@@ -1,0 +1,28 @@
+{
+  "name": "pizzaria-system",
+  "version": "1.0.0",
+  "description": "Sistema completo de gerenciamento de pizzaria - MVC com Node.js, Express, SQLite",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "init-db": "node -e \"require('./src/config/database'); console.log('Banco inicializado!')\""
+  },
+  "keywords": [
+    "pizzaria",
+    "mvc",
+    "estoque",
+    "vendas",
+    "sqlite",
+    "express"
+  ],
+  "author": "Bella Pizza System",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "better-sqlite3": "^13.0.3",
+    "ejs": "^6.0.1",
+    "express": "^5.2.1",
+    "multer": "^2.4.0"
+  }
+}

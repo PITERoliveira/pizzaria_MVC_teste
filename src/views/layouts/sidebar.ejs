@@ -1,0 +1,90 @@
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">
+        <i class="fa-solid fa-pizza-slice"></i>
+      </div>
+      <div class="brand-text">
+        <h3>Bella Pizza</h3>
+        <span>Sistema de Gestão MVC</span>
+      </div>
+    </div>
+
+    <ul class="sidebar-nav">
+      <li class="nav-item">
+        <a href="/" class="nav-link <%= page === 'dashboard' ? 'active' : '' %>">
+          <i class="fa-solid fa-chart-pie"></i>
+          <span>Dashboard</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="/vendas/pdv" class="nav-link highlight-pdv <%= page === 'pdv' ? 'active' : '' %>">
+          <i class="fa-solid fa-cash-register"></i>
+          <span>PDV / Caixa</span>
+          <span class="badge bg-danger ms-auto">Novo</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="/vendas" class="nav-link <%= page === 'vendas' ? 'active' : '' %>">
+          <i class="fa-solid fa-receipt"></i>
+          <span>Vendas & Pedidos</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="/pizzas/customizar" class="nav-link <%= page === 'customizar' ? 'active' : '' %>">
+          <i class="fa-solid fa-wand-magic-sparkles"></i>
+          <span>Montar Pizza</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="/pizzas" class="nav-link <%= page === 'pizzas' ? 'active' : '' %>">
+          <i class="fa-solid fa-book-open"></i>
+          <span>Cardápio & Receitas</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="/clientes" class="nav-link <%= page === 'clientes' ? 'active' : '' %>">
+          <i class="fa-solid fa-users"></i>
+          <span>Clientes</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="/estoque" class="nav-link <%= page === 'estoque' ? 'active' : '' %>">
+          <i class="fa-solid fa-boxes-stacked"></i>
+          <span>Controle de Estoque</span>
+        </a>
+      </li>
+    </ul>
+
+    <div class="sidebar-footer">
+      <div class="user-quick-info">
+        <div class="avatar-dot bg-success"></div>
+        <div>
+          <strong>Gerente Admin</strong>
+          <small>Operacional Ativo</small>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content Wrapper -->
+  <main class="main-content">
+    <!-- Top Navbar -->
+    <header class="top-navbar">
+      <div class="navbar-left">
+        <button class="btn btn-icon sidebar-toggler" id="sidebarToggle">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+        <h1 class="page-title"><%= title %></h1>
+      </div>
+      <div class="navbar-right">
+        <a href="/vendas/pdv" class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm">
+          <i class="fa-solid fa-plus me-1"></i> Nova Venda / PDV
+        </a>
+        <a href="/estoque?alerta=true" class="btn btn-outline-warning btn-sm rounded-circle position-relative ms-2" title="Alertas de Estoque">
+          <i class="fa-solid fa-bell"></i>
+        </a>
+      </div>
+    </header>
+
+    <div class="content-body">
